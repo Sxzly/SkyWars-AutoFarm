@@ -19,42 +19,32 @@ end
 print("🔒 Protección activa - Script verificado")
 
 -- ============================================
--- EL RESTO ES TU SCRIPT ORIGINAL (SIN NINGÚN CAMBIO)
+-- SERVICIOS
 -- ============================================
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local httpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local repstorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
--- WEBHOOK DE DISCORD (usando la variable protegida)
+-- WEBHOOK DE DISCORD
 local webhookURL = WEBHOOK
 
--- Archivos de guardado
-local RESETS_FILE = "skywars_resets.txt"
-local XP_FILE = "skywars_xp.txt"
+-- ============================================
+-- ARCHIVOS DE GUARDADO (con nombre único para SkyWars)
+-- ============================================
+local RESETS_FILE = "skywars_sxzly_resets.txt"
+local XP_FILE = "skywars_sxzly_xp.txt"
 
--- Variables de datos
 local totalResets = 0
 local totalXP = 0
 local XP_PER_RESET = 600
 local startTime = os.time()
 
--- Cargar datos guardados
 if isfile and readfile then
-    local success1, savedResets = pcall(function() return readfile(RESETS_FILE) end)
-    if success1 and savedResets then
-        totalResets = tonumber(savedResets) or 0
-        print("✅ Resets loaded:", totalResets)
-    end
-    
-    local success2, savedXP = pcall(function() return readfile(XP_FILE) end)
-    if success2 and savedXP then
-        totalXP = tonumber(savedXP) or 0
-        print("✅ XP loaded:", totalXP)
-    end
-else
-    warn("⚠️ Your executor doesn't support file saving")
+    pcall(function() totalResets = tonumber(readfile(RESETS_FILE)) or 0 end)
+    pcall(function() totalXP = tonumber(readfile(XP_FILE)) or 0 end)
 end
 
 local function saveData()
@@ -62,7 +52,6 @@ local function saveData()
         pcall(function()
             writefile(RESETS_FILE, tostring(totalResets))
             writefile(XP_FILE, tostring(totalXP))
-            print("💾 Data saved - Resets:", totalResets, "XP:", totalXP)
         end)
     end
 end
@@ -72,7 +61,6 @@ local function getElapsedTime()
     local hours = math.floor(elapsed / 3600)
     local minutes = math.floor((elapsed % 3600) / 60)
     local seconds = elapsed % 60
-    
     if hours > 0 then
         return string.format("%dh %dm %ds", hours, minutes, seconds)
     elseif minutes > 0 then
@@ -87,6 +75,10 @@ local function sendResetWebhook(reason)
     totalXP = totalXP + XP_PER_RESET
     saveData()
     
+    if uiElements then
+        uiElements.resetsLabel.Text = "🏆 " .. totalResets
+    end
+    
     task.spawn(function()
         pcall(function()
             local embed = {
@@ -100,7 +92,6 @@ local function sendResetWebhook(reason)
                         {["name"] = "⭐ Total XP Gained", ["value"] = tostring(totalXP) .. " XP", ["inline"] = true},
                         {["name"] = "⏱️ Running Time", ["value"] = getElapsedTime(), ["inline"] = true},
                         {["name"] = "💎 XP This Reset", ["value"] = "+" .. tostring(XP_PER_RESET) .. " XP", ["inline"] = true},
-                        {["name"] = "📊 XP per Hour", ["value"] = string.format("~%.0f XP/h", (totalXP / math.max(1, (os.time() - startTime) / 3600))), ["inline"] = true},
                         {["name"] = "📍 Reason", ["value"] = reason or "Chest height detected", ["inline"] = false},
                         {["name"] = "🎮 Game", ["value"] = "SkyWars", ["inline"] = true}
                     },
@@ -113,7 +104,98 @@ local function sendResetWebhook(reason)
     end)
 end
 
--- Create Loading Screen GUI
+-- ============================================
+-- UI MODERNA FLOTANTE
+-- ============================================
+local ScreenGuiModern = Instance.new("ScreenGui")
+ScreenGuiModern.Name = "StatsUI"
+ScreenGuiModern.Parent = player:WaitForChild("PlayerGui")
+ScreenGuiModern.ResetOnSpawn = false
+ScreenGuiModern.IgnoreGuiInset = true
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Parent = ScreenGuiModern
+MainFrame.AnchorPoint = Vector2.new(1, 0)
+MainFrame.Position = UDim2.new(1, -10, 0, 80)
+MainFrame.Size = UDim2.new(0, 230, 0, 95)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BackgroundTransparency = 0.15
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Parent = MainFrame
+titleLabel.Position = UDim2.new(0, 10, 0, 5)
+titleLabel.Size = UDim2.new(0, 150, 0, 20)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Text = "⚔️ SKYWARS FARM"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 12
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local creditLabel = Instance.new("TextLabel")
+creditLabel.Parent = MainFrame
+creditLabel.Position = UDim2.new(0, 155, 0, 5)
+creditLabel.Size = UDim2.new(0, 70, 0, 20)
+creditLabel.BackgroundTransparency = 1
+creditLabel.Font = Enum.Font.Gotham
+creditLabel.Text = "By sxzly"
+creditLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
+creditLabel.TextSize = 10
+creditLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local resetsLabel = Instance.new("TextLabel")
+resetsLabel.Parent = MainFrame
+resetsLabel.Position = UDim2.new(0, 10, 0, 28)
+resetsLabel.Size = UDim2.new(1, -20, 0, 28)
+resetsLabel.BackgroundTransparency = 1
+resetsLabel.Font = Enum.Font.GothamBold
+resetsLabel.Text = "🏆 " .. totalResets
+resetsLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
+resetsLabel.TextSize = 18
+
+local xpPerMatchLabel = Instance.new("TextLabel")
+xpPerMatchLabel.Parent = MainFrame
+xpPerMatchLabel.Position = UDim2.new(0, 10, 0, 56)
+xpPerMatchLabel.Size = UDim2.new(1, -20, 0, 18)
+xpPerMatchLabel.BackgroundTransparency = 1
+xpPerMatchLabel.Font = Enum.Font.Gotham
+xpPerMatchLabel.Text = "💎 +" .. XP_PER_RESET .. " XP"
+xpPerMatchLabel.TextColor3 = Color3.fromRGB(180, 180, 220)
+xpPerMatchLabel.TextSize = 11
+
+local timerLabel = Instance.new("TextLabel")
+timerLabel.Parent = MainFrame
+timerLabel.Position = UDim2.new(0, 10, 0, 74)
+timerLabel.Size = UDim2.new(1, -20, 0, 14)
+timerLabel.BackgroundTransparency = 1
+timerLabel.Font = Enum.Font.Gotham
+timerLabel.Text = "⏱️ " .. getElapsedTime()
+timerLabel.TextColor3 = Color3.fromRGB(100, 180, 255)
+timerLabel.TextSize = 10
+
+uiElements = {
+    resetsLabel = resetsLabel,
+    timerLabel = timerLabel
+}
+
+task.spawn(function()
+    while true do
+        timerLabel.Text = "⏱️ " .. getElapsedTime()
+        resetsLabel.Text = "🏆 " .. totalResets
+        task.wait(1)
+    end
+end)
+
+-- ============================================
+-- UI DE CARGA ORIGINAL
+-- ============================================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "LoadingScreen"
 screenGui.ResetOnSpawn = false
@@ -236,7 +318,9 @@ loadBarFill.BorderSizePixel = 0
 loadBarFill.ZIndex = 3
 loadBarFill.Parent = loadBarBG
 
--- BALANCED SETTINGS
+-- ============================================
+-- DETECCIÓN DE COFRES (EXACTAMENTE COMO EN TU ORIGINAL)
+-- ============================================
 local CHEST_NAME = "chest"
 local HEIGHT_TOLERANCE = 2
 local CHECK_INTERVAL = 0.1
@@ -246,7 +330,6 @@ local hasTriggered = false
 local isProcessing = false
 local workspace = game:GetService("Workspace")
 
--- Find nearest chest
 local function findNearestChest()
     local character = player.Character
     if not character then return nil end
@@ -346,7 +429,7 @@ local function fastReset(method)
     end)
 end
 
--- Monitor chest height (Method 1)
+-- METHOD 1 (exactamente como en tu original)
 task.spawn(function()
     while ENABLED do
         pcall(function()
@@ -374,7 +457,7 @@ task.spawn(function()
     end
 end)
 
--- Method 2
+-- METHOD 2 (exactamente como en tu original - con task.wait(0.4))
 local function isAtChestHeight()
     local character = player.Character
     if not character then return false end
@@ -413,7 +496,7 @@ task.spawn(function()
                     end
                 end
                 
-                task.wait(0.4)
+                task.wait(0.4)  -- ← ESTE ES EL TIEMPO CORRECTO (NO 0.3)
                 
                 local data = TeleportService:GetLocalPlayerTeleportData()
                 player:Kick("waiting for tp...")
@@ -427,7 +510,9 @@ task.spawn(function()
     end
 end)
 
--- Loading animation
+-- ============================================
+-- ANIMACIÓN DE CARGA
+-- ============================================
 task.spawn(function()
     local duration = 4
     local startAnimTime = tick()
@@ -484,7 +569,9 @@ task.spawn(function()
     screenGui:Destroy()
 end)
 
--- Queue spam
+-- ============================================
+-- QUEUE SPAM (AUTO-JOIN)
+-- ============================================
 if game.PlaceId == 6872265039 then
     task.spawn(function()
         while true do
@@ -505,9 +592,12 @@ else
     print("[sxzly] Not in lobby")
 end
 
-print("✅ SkyWars AutoFarm loaded!")
-print("💾 Loaded Data:")
-print("  - Total Resets:", totalResets)
-print("  - Total XP:", totalXP)
-print("  - XP per Reset:", XP_PER_RESET)
-print("📝 made by sxzly")
+-- ANIMACIÓN INICIAL DE LA UI MODERNA
+MainFrame.Size = UDim2.new(0, 0, 0, 0)
+task.wait(0.5)
+TweenService:Create(MainFrame, TweenInfo.new(0.5), {Size = UDim2.new(0, 230, 0, 95)}):Play()
+
+print("✅ SkyWars AutoFarm v2.0 - made by sxzly")
+print("🔒 Protección activa - Crédito y webhook verificados")
+print("📊 Partidas cargadas:", totalResets)
+print("💎 XP por partida:", XP_PER_RESET)
